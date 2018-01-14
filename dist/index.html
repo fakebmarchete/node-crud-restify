@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy" crossorigin="anonymous">
+    <title>Página simples</title>
+</head>
+
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                    <input type="text" id="texto">
+                    <button id="botao">Enviar</button>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                    <h1>Lista de nomes</h1>
+                    <ul id="lista"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function read() {
+            lista.innerHTML = "";
+
+            axios.get('/read')
+                .then(function (response) {
+                    response.data.forEach(element => {
+                        lista.innerHTML += `
+                            <li>${element.name} 
+                                <span class="delete a" data-id="${element.id}"> x</span> 
+                                <span class="update " data-id="${element.id}"> v</span>    
+                            </li>
+                        `;
+                    });
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
+        }
+
+        function adicionar() {
+            const name = texto.value;
+            axios.post('/create', {
+                name
+            })
+                .then(function (response) {
+                    console.log(response);
+                    if (response.data.length > 0) {
+                        lista.innerHTML += `<li>${name} <span data-id="${response.data[0]}">x</span> </li>`
+                        
+                    }
+
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
+        }
+
+        function edita(element){
+            
+            if (element.target.classList.contains('update')) {
+                const id = element.target.dataset.id;
+                const pai = element.target.parentElement;
+                const template = `<input type="text" onblur="salva(${id}, this)">`
+                pai.innerHTML = template;
+                //pai.appendChild(input);
+                
+                //console.log(pai);
+            }
+        }
+
+        // terminar atualizar elemento
+        function salva(id, element) {
+            element.innerHTML = '<li>ok</li>';return;
+            axios.put(`/edit/${id}`, {name: element.value})
+                    .then(function (response) {
+                        if (response.status = 200) {
+                            lista.removeChild(element.path[1]);
+                        }
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
+        }
+
+        function apaga(element) {
+           //console.log();return;
+            if (element.target.classList.contains('delete')) {
+                const id = element.target.dataset.id;
+                axios.delete(`/delete/${id}`)
+                    .then(function (response) {
+                        if (response.status = 200) {
+                            lista.removeChild(element.path[1]);
+                        }
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
+            }
+        }
+
+        window.onload = () => {
+            const lista = document.querySelector('#lista');
+            const botao = document.querySelector('#botao');
+            const texto = document.querySelector('#texto');
+
+            botao.addEventListener('click', adicionar);
+            lista.addEventListener('click', apaga);
+            lista.addEventListener('click', edita);
+           
+            read();
+          
+        };
+    </script>
+</body>
+
+</html>

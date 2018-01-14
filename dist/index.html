@@ -55,7 +55,12 @@
                 .then(function (response) {
                     console.log(response);
                     if (response.data.length > 0) {
-                        lista.innerHTML += `<li>${name} <span data-id="${response.data[0]}">x</span> </li>`
+                        lista.innerHTML += 
+                        ` <li>${name} 
+                                <span class="delete a" data-id="${response.data[0]}"> x</span> 
+                                <span class="update " data-id="${response.data[0]}"> v</span>    
+                            </li>`
+                        //`<li>${name} <span data-id="${response.data[0]}">x</span> </li>`
                         
                     }
 
@@ -70,21 +75,40 @@
             if (element.target.classList.contains('update')) {
                 const id = element.target.dataset.id;
                 const pai = element.target.parentElement;
-                const template = `<input type="text" onblur="salva(${id}, this)">`
-                pai.innerHTML = template;
-                //pai.appendChild(input);
+                window.input = document.createElement('input');
+                input.type = 'text';
+                input.setAttribute('value', '');
+                //window.pai = pai;
+                //const template = `<input type="text" onblur="salva(${id}, this)">`
+                pai.innerHTML = '';
+                pai.appendChild(input);
+                input.addEventListener('blur', salva.bind(pai, input, id));
                 
                 //console.log(pai);
             }
         }
 
         // terminar atualizar elemento
-        function salva(id, element) {
-            element.innerHTML = '<li>ok</li>';return;
-            axios.put(`/edit/${id}`, {name: element.value})
-                    .then(function (response) {
+        function salva(input, id) {
+           
+            // console.log(this, input.value, id);
+            // this.removeChild(input);
+            
+            // return;
+                      
+           // return;
+            axios.put(`/update/${id}`, {name: input.value})
+                    .then((response) => {
                         if (response.status = 200) {
-                            lista.removeChild(element.path[1]);
+                            console.log(response);
+                            //lista.removeChild(element.path[1]);
+                            this.innerHTML = `
+                            ${input.value} 
+                                <span class="delete a" data-id="${id}"> x</span> 
+                                <span class="update " data-id="${id}"> v</span>    
+                            `
+                            
+                            console.log('ok');
                         }
                     })
                     .catch(function (error) {

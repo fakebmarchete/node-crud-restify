@@ -7,39 +7,52 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy" crossorigin="anonymous">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+    
     <title>Página simples</title>
 </head>
 
 <body>
     <div class="container">
+        <h1>Cadastro de Nomes</h1>
         <div class="row">
-            <div class="col">
-                    <input type="text" id="texto">
-                    <button id="botao">Enviar</button>
+            <div class="col-6">
+                <input type="text" id="texto" class="form-control" style="display:inline;vertical-align: middle; width: auto; ">
+                <button id="botao" class="btn btn-primary" >Enviar <i class="fa fa-check" aria-hidden="true"></i></button>
             </div>
         </div>
+        <hr>
+        <h1 style="margin-top:40px;">Lista de nomes</h1>
 
         <div class="row">
-            <div class="col">
-                    <h1>Lista de nomes</h1>
-                    <ul id="lista"></ul>
+            <div class="col-6">
+                <ul class="list-group" id="lista"></ul>
+
             </div>
         </div>
     </div>
 
     <script>
+
+        function lineTemplate(id, name, type = '', classList = []) {
+            return `
+                ${type? `<${type} class="${classList.join(' ')}">` : ''}
+                    ${name} 
+                    <i class="btn btn-danger delete fa fa-trash"" style="float: right; margin-left: 5px;" data-id="${id}"></i> 
+                    <i class="btn btn-primary update fa fa-wrench" style="float: right;" data-id="${id}"></i>    
+                ${type? `</${type}>` : ''}
+            `;
+        }
+
+
         function read() {
             lista.innerHTML = "";
 
             axios.get('/read')
                 .then(function (response) {
                     response.data.forEach(element => {
-                        lista.innerHTML += `
-                            <li>${element.name} 
-                                <span class="delete a" data-id="${element.id}"> x</span> 
-                                <span class="update " data-id="${element.id}"> v</span>    
-                            </li>
-                        `;
+                        lista.innerHTML += lineTemplate(element.id, element.name, 'li', ['list-group-item']);
+                       
                     });
                 })
                 .catch(function (error) {
@@ -55,13 +68,7 @@
                 .then(function (response) {
                     console.log(response);
                     if (response.data.length > 0) {
-                        lista.innerHTML += 
-                        ` <li>${name} 
-                                <span class="delete a" data-id="${response.data[0]}"> x</span> 
-                                <span class="update " data-id="${response.data[0]}"> v</span>    
-                            </li>`
-                        //`<li>${name} <span data-id="${response.data[0]}">x</span> </li>`
-                        
+                        lista.innerHTML += lineTemplate(response.data[0], name, 'li', ['list-group-item']);
                     }
 
                 })
@@ -70,59 +77,49 @@
                 });
         }
 
-        function edita(element){
-            
+        function edita(element) {
+
             if (element.target.classList.contains('update')) {
                 const id = element.target.dataset.id;
                 const pai = element.target.parentElement;
-                window.input = document.createElement('input');
+                const input = document.createElement('input');
                 input.type = 'text';
                 input.setAttribute('value', '');
-                //window.pai = pai;
-                //const template = `<input type="text" onblur="salva(${id}, this)">`
+                
                 pai.innerHTML = '';
                 pai.appendChild(input);
-                input.addEventListener('blur', salva.bind(pai, input, id));
-                
-                //console.log(pai);
+                input.addEventListener('keydown', atualiza.bind(pai, input, id));
+                input.focus();
+
             }
         }
 
-        // terminar atualizar elemento
-        function salva(input, id) {
-           
-            // console.log(this, input.value, id);
-            // this.removeChild(input);
+      
+        function atualiza(input, id) {
+            const x = event.key;
+            if(x == null || x != 'Enter') return;
             
-            // return;
-                      
-           // return;
-            axios.put(`/update/${id}`, {name: input.value})
-                    .then((response) => {
-                        if (response.status = 200) {
-                            console.log(response);
-                            //lista.removeChild(element.path[1]);
-                            this.innerHTML = `
-                            ${input.value} 
-                                <span class="delete a" data-id="${id}"> x</span> 
-                                <span class="update " data-id="${id}"> v</span>    
-                            `
-                            
-                            console.log('ok');
-                        }
-                    })
-                    .catch(function (error) {
-                        console.log(error);
-                    });
+            axios.put(`/update/${id}`, { name: input.value })
+                .then((response) => {
+                    if (response.status = 200) {
+                        console.log(response);
+                        this.innerHTML = lineTemplate(id, input.value);
+                       
+                    }
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
         }
 
         function apaga(element) {
-           //console.log();return;
+            //console.log();return;
             if (element.target.classList.contains('delete')) {
                 const id = element.target.dataset.id;
                 axios.delete(`/delete/${id}`)
                     .then(function (response) {
                         if (response.status = 200) {
+                            console.log(response);
                             lista.removeChild(element.path[1]);
                         }
                     })
@@ -140,9 +137,9 @@
             botao.addEventListener('click', adicionar);
             lista.addEventListener('click', apaga);
             lista.addEventListener('click', edita);
-           
+
             read();
-          
+
         };
     </script>
 </body>
